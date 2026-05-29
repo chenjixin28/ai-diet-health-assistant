@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+backend/uploads/
+
+# Training data (too large for GitHub)
+food_training/downloads/
+food_training/food_dataset/
+
+# Models
+*.pt
+*.pth
+*.onnx
+
+# Logs
+*.log

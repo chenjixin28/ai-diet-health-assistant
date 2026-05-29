@@ -1,0 +1,14 @@
+path: ./food_dataset
+train: images/train
+val: images/val
+
+nc: 8
+names:
+  0: apple
+  1: banana
+  2: egg
+  3: bread
+  4: orange
+  5: tomato
+  6: carrot
+  7: milk

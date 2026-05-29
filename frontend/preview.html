@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI饮食健康助手 - 预览</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d'},
+        accent: {50:'#fff7ed',100:'#ffedd5',200:'#fed7aa',300:'#fdba74',400:'#fb923c',500:'#f97316',600:'#ea580c',700:'#c2410c'},
+      }
+    }
+  }
+}
+</script>
+<style>
+.slide-in { animation: slideIn 0.3s ease-out; }
+@keyframes slideIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+.page { display: none; }
+.page.active { display: block; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+</style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+<!-- ====== 导航切换 ====== -->
+<div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white rounded-full shadow-lg border border-gray-200 flex overflow-hidden">
+  <button onclick="showPage('login')" class="px-4 py-2 text-sm font-medium hover:bg-primary-50 transition-colors nav-btn" data-page="login">登录</button>
+  <button onclick="showPage('register')" class="px-4 py-2 text-sm font-medium hover:bg-primary-50 transition-colors nav-btn" data-page="register">注册</button>
+  <button onclick="showPage('dashboard')" class="px-4 py-2 text-sm font-medium hover:bg-primary-50 transition-colors nav-btn" data-page="dashboard">仪表板</button>
+  <button onclick="showPage('recognition')" class="px-4 py-2 text-sm font-medium hover:bg-primary-50 transition-colors nav-btn" data-page="recognition">食物识别</button>
+  <button onclick="showPage('nutrition')" class="px-4 py-2 text-sm font-medium hover:bg-primary-50 transition-colors nav-btn" data-page="nutrition">营养分析</button>
+  <button onclick="showPage('planner')" class="px-4 py-2 text-sm font-medium hover:bg-primary-50 transition-colors nav-btn" data-page="planner">食谱推荐</button>
+</div>
+
+<script>
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('bg-primary-600', b.dataset.page === name);
+    b.classList.toggle('text-white', b.dataset.page === name);
+    b.classList.toggle('font-semibold', b.dataset.page === name);
+  });
+}
+showPage('login');
+</script>
+
+<!-- ================================================ -->
+<!-- PAGE: 登录 -->
+<!-- ================================================ -->
+<div id="page-login" class="page active min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50">
+  <div class="w-full max-w-md px-6">
+    <div class="text-center mb-8">
+      <span class="text-6xl">🥗</span>
+      <h1 class="text-2xl font-bold text-gray-900 mt-3">AI饮食健康助手</h1>
+      <p class="text-gray-500 mt-1">记录每一餐，健康每一天</p>
+    </div>
+    <form onsubmit="event.preventDefault();alert('这是预览模式')" class="bg-white rounded-2xl shadow-lg p-8 space-y-5">
+      <h2 class="text-lg font-semibold text-gray-800">登录</h2>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">用户名 / 邮箱</label>
+        <input type="text" value="test_user" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition-shadow">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">密码</label>
+        <input type="password" value="123456" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition-shadow">
+      </div>
+      <button type="submit" class="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">登 录</button>
+      <p class="text-center text-sm text-gray-500">还没有账号？<a href="#" onclick="showPage('register')" class="text-primary-600 hover:underline ml-1">立即注册</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- ================================================ -->
+<!-- PAGE: 注册 -->
+<!-- ================================================ -->
+<div id="page-register" class="page min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50">
+  <div class="w-full max-w-md px-6">
+    <div class="text-center mb-8">
+      <span class="text-6xl">🥗</span>
+      <h1 class="text-2xl font-bold text-gray-900 mt-3">AI饮食健康助手</h1>
+      <p class="text-gray-500 mt-1">开始你的健康之旅</p>
+    </div>
+    <form onsubmit="event.preventDefault();alert('这是预览模式')" class="bg-white rounded-2xl shadow-lg p-8 space-y-4">
+      <h2 class="text-lg font-semibold text-gray-800">注册</h2>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">用户名</label>
+        <input type="text" placeholder="3-50位字母数字" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">邮箱</label>
+        <input type="email" placeholder="example@email.com" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">密码</label>
+        <input type="password" placeholder="至少6位" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">确认密码</label>
+        <input type="password" placeholder="再次输入密码" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none">
+      </div>
+      <button type="submit" class="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">注 册</button>
+      <p class="text-center text-sm text-gray-500">已有账号？<a href="#" onclick="showPage('login')" class="text-primary-600 hover:underline ml-1">去登录</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- ================================================ -->
+<!-- PAGE: 仪表板（带侧边栏） -->
+<!-- ================================================ -->
+<div id="page-dashboard" class="page flex h-screen overflow-hidden">
+  <!-- 侧边栏 -->
+  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col shrink-0">
+    <div class="p-6 border-b border-gray-100">
+      <div class="flex items-center gap-2 text-lg font-bold text-primary-700">
+        <span class="text-2xl">🥗</span> 饮食健康助手
+      </div>
+    </div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="#" onclick="showPage('dashboard')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-primary-50 text-primary-700 no-underline text-sm font-medium"><span class="text-lg">📊</span>仪表板</a>
+      <a href="#" onclick="showPage('recognition')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📸</span>食物识别</a>
+      <a href="#" onclick="showPage('nutrition')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📋</span>营养分析</a>
+      <a href="#" onclick="showPage('planner')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">🍽️</span>食谱推荐</a>
+    </nav>
+    <div class="p-4 border-t border-gray-100">
+      <div class="text-sm text-gray-500 mb-2 truncate">👤 test_user</div>
+      <button onclick="showPage('login')" class="w-full py-2 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-0 bg-transparent text-left">退出登录</button>
+    </div>
+  </aside>
+  <!-- 主区域 -->
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-5xl mx-auto px-8 py-6 space-y-6">
+      <h1 class="text-2xl font-bold text-gray-900">👋 你好，test_user</h1>
+
+      <!-- 三卡片 -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <p class="text-sm text-gray-500">今日摄入</p>
+          <p class="text-3xl font-bold text-primary-600 mt-1">0</p>
+          <p class="text-xs text-gray-400 mt-1">/ 2000 kcal 目标</p>
+          <div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-primary-500 h-2 rounded-full" style="width:0%"></div></div>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <p class="text-sm text-gray-500">蛋白质</p>
+          <p class="text-3xl font-bold text-blue-600 mt-1">0.0</p>
+          <p class="text-xs text-gray-400 mt-1">/ 60g 目标</p>
+        </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <p class="text-sm text-gray-500">健康目标</p>
+          <p class="text-3xl mt-1">🎯</p>
+          <p class="text-sm font-medium text-gray-700 mt-1">未设置</p>
+        </div>
+      </div>
+
+      <!-- 健康档案 -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-800">📋 健康档案</h2>
+          <button onclick="alert('预览模式：点击编辑可修改健康档案')" class="text-sm text-primary-600 hover:underline cursor-pointer border-0 bg-transparent">编辑</button>
+        </div>
+        <div class="grid grid-cols-4 gap-4 text-sm">
+          <div><span class="text-gray-400">身高</span><p class="font-medium mt-1">-- cm</p></div>
+          <div><span class="text-gray-400">体重</span><p class="font-medium mt-1">-- kg</p></div>
+          <div><span class="text-gray-400">目标</span><p class="font-medium mt-1">--</p></div>
+          <div><span class="text-gray-400">目标体重</span><p class="font-medium mt-1">-- kg</p></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================================================ -->
+<!-- PAGE: 食物识别 -->
+<!-- ================================================ -->
+<div id="page-recognition" class="page flex h-screen overflow-hidden">
+  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col shrink-0">
+    <div class="p-6 border-b border-gray-100"><div class="flex items-center gap-2 text-lg font-bold text-primary-700"><span class="text-2xl">🥗</span>饮食健康助手</div></div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="#" onclick="showPage('dashboard')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📊</span>仪表板</a>
+      <a href="#" onclick="showPage('recognition')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-primary-50 text-primary-700 no-underline text-sm font-medium"><span class="text-lg">📸</span>食物识别</a>
+      <a href="#" onclick="showPage('nutrition')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📋</span>营养分析</a>
+      <a href="#" onclick="showPage('planner')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">🍽️</span>食谱推荐</a>
+    </nav>
+    <div class="p-4 border-t border-gray-100"><div class="text-sm text-gray-500 mb-2 truncate">👤 test_user</div><button onclick="showPage('login')" class="w-full py-2 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-0 bg-transparent text-left">退出登录</button></div>
+  </aside>
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-5xl mx-auto px-8 py-6 space-y-6">
+      <h1 class="text-2xl font-bold text-gray-900">📸 食物识别</h1>
+      <!-- 上传区域 -->
+      <div class="bg-white rounded-xl p-10 shadow-sm border border-gray-100 border-dashed text-center hover:border-primary-400 transition-colors cursor-pointer">
+        <span class="text-6xl block mb-4">📸</span>
+        <p class="text-lg font-medium text-gray-700">点击或拖拽上传食物图片</p>
+        <p class="text-sm text-gray-400 mt-1">支持 JPG / PNG / WEBP，最大 10MB</p>
+      </div>
+      <!-- 模拟识别结果 -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">🔍 识别结果（模拟）</h2>
+        <div class="flex items-start gap-4 p-4 bg-primary-50 rounded-lg">
+          <span class="text-4xl">🍚</span>
+          <div class="space-y-1 flex-1">
+            <p class="font-semibold text-gray-900">米饭 + 红烧肉 + 青菜</p>
+            <p class="text-xs text-gray-500">置信度 92% · 份量约 400g</p>
+            <div class="grid grid-cols-4 gap-3 mt-3 text-center">
+              <div class="bg-white rounded-lg p-2"><p class="text-xs text-gray-400">热量</p><p class="text-lg font-bold text-primary-600">580</p><p class="text-xs text-gray-400">kcal</p></div>
+              <div class="bg-white rounded-lg p-2"><p class="text-xs text-gray-400">蛋白质</p><p class="text-lg font-bold text-blue-600">32.5</p><p class="text-xs text-gray-400">g</p></div>
+              <div class="bg-white rounded-lg p-2"><p class="text-xs text-gray-400">脂肪</p><p class="text-lg font-bold text-accent-600">22.0</p><p class="text-xs text-gray-400">g</p></div>
+              <div class="bg-white rounded-lg p-2"><p class="text-xs text-gray-400">碳水</p><p class="text-lg font-bold text-yellow-600">65.0</p><p class="text-xs text-gray-400">g</p></div>
+            </div>
+          </div>
+        </div>
+        <button onclick="alert('预览模式')" class="mt-4 w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">添加到饮食记录</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================================================ -->
+<!-- PAGE: 营养分析 -->
+<!-- ================================================ -->
+<div id="page-nutrition" class="page flex h-screen overflow-hidden">
+  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col shrink-0">
+    <div class="p-6 border-b border-gray-100"><div class="flex items-center gap-2 text-lg font-bold text-primary-700"><span class="text-2xl">🥗</span>饮食健康助手</div></div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="#" onclick="showPage('dashboard')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📊</span>仪表板</a>
+      <a href="#" onclick="showPage('recognition')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📸</span>食物识别</a>
+      <a href="#" onclick="showPage('nutrition')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-primary-50 text-primary-700 no-underline text-sm font-medium"><span class="text-lg">📋</span>营养分析</a>
+      <a href="#" onclick="showPage('planner')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">🍽️</span>食谱推荐</a>
+    </nav>
+    <div class="p-4 border-t border-gray-100"><div class="text-sm text-gray-500 mb-2 truncate">👤 test_user</div><button onclick="showPage('login')" class="w-full py-2 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-0 bg-transparent text-left">退出登录</button></div>
+  </aside>
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-5xl mx-auto px-8 py-6 space-y-6">
+      <h1 class="text-2xl font-bold text-gray-900">📋 营养分析</h1>
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="font-semibold text-gray-800 mb-4">📊 本周摄入趋势</h2>
+        <!-- 模拟柱状图 -->
+        <div class="flex items-end justify-between gap-2 h-48 px-4">
+          <div class="flex flex-col items-center flex-1"><div class="w-full bg-primary-400 rounded-t" style="height:120px"></div><span class="text-xs text-gray-400 mt-2">周一</span></div>
+          <div class="flex flex-col items-center flex-1"><div class="w-full bg-primary-400 rounded-t" style="height:160px"></div><span class="text-xs text-gray-400 mt-2">周二</span></div>
+          <div class="flex flex-col items-center flex-1"><div class="w-full bg-primary-500 rounded-t" style="height:140px"></div><span class="text-xs text-gray-400 mt-2">周三</span></div>
+          <div class="flex flex-col items-center flex-1"><div class="w-full bg-primary-500 rounded-t" style="height:180px"></div><span class="text-xs text-gray-400 mt-2">周四</span></div>
+          <div class="flex flex-col items-center flex-1"><div class="w-full bg-accent-400 rounded-t" style="height:200px"></div><span class="text-xs text-gray-400 mt-2">周五</span></div>
+          <div class="flex flex-col items-center flex-1"><div class="w-full bg-accent-400 rounded-t" style="height:150px"></div><span class="text-xs text-gray-400 mt-2">周六</span></div>
+          <div class="flex flex-col items-center flex-1"><div class="w-full bg-primary-400 rounded-t" style="height:130px"></div><span class="text-xs text-gray-400 mt-2">周日</span></div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-400 mt-2 px-4"><span class="flex items-center gap-1"><span class="w-3 h-3 bg-primary-400 inline-block rounded-sm"></span>热量</span><span class="text-gray-500">单位: kcal</span></div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h2 class="font-semibold text-gray-800 mb-4">🥩 宏量营养素占比</h2>
+          <div class="flex items-center justify-center gap-6">
+            <div class="w-28 h-28 rounded-full border-[16px] border-primary-400 border-r-blue-400 border-b-accent-400 border-l-transparent -rotate-45"></div>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center gap-2"><span class="w-3 h-3 bg-primary-400 rounded-full"></span>碳水 52%</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 bg-blue-400 rounded-full"></span>蛋白质 28%</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 bg-accent-400 rounded-full"></span>脂肪 20%</div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h2 class="font-semibold text-gray-800 mb-4">📅 今日摘要</h2>
+          <div class="space-y-3">
+            <div class="flex justify-between"><span class="text-sm text-gray-500">餐次记录</span><span class="font-semibold">3 次</span></div>
+            <div class="flex justify-between"><span class="text-sm text-gray-500">总热量</span><span class="font-semibold text-primary-600">1,680 kcal</span></div>
+            <div class="flex justify-between"><span class="text-sm text-gray-500">蛋白质</span><span class="font-semibold text-blue-600">82.5 g</span></div>
+            <div class="flex justify-between"><span class="text-sm text-gray-500">脂肪</span><span class="font-semibold text-accent-600">55.0 g</span></div>
+            <div class="flex justify-between"><span class="text-sm text-gray-500">碳水</span><span class="font-semibold text-yellow-600">218.0 g</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================================================ -->
+<!-- PAGE: 食谱推荐 -->
+<!-- ================================================ -->
+<div id="page-planner" class="page flex h-screen overflow-hidden">
+  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col shrink-0">
+    <div class="p-6 border-b border-gray-100"><div class="flex items-center gap-2 text-lg font-bold text-primary-700"><span class="text-2xl">🥗</span>饮食健康助手</div></div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="#" onclick="showPage('dashboard')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📊</span>仪表板</a>
+      <a href="#" onclick="showPage('recognition')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📸</span>食物识别</a>
+      <a href="#" onclick="showPage('nutrition')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 no-underline text-sm"><span class="text-lg">📋</span>营养分析</a>
+      <a href="#" onclick="showPage('planner')" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-primary-50 text-primary-700 no-underline text-sm font-medium"><span class="text-lg">🍽️</span>食谱推荐</a>
+    </nav>
+    <div class="p-4 border-t border-gray-100"><div class="text-sm text-gray-500 mb-2 truncate">👤 test_user</div><button onclick="showPage('login')" class="w-full py-2 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer border-0 bg-transparent text-left">退出登录</button></div>
+  </aside>
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-5xl mx-auto px-8 py-6 space-y-6">
+      <h1 class="text-2xl font-bold text-gray-900">🍽️ AI 食谱推荐</h1>
+
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h2 class="font-semibold text-gray-800 mb-4">🤖 根据你的健康目标生成食谱</h2>
+        <div class="flex gap-3 mb-6">
+          <button class="px-4 py-2 rounded-full text-sm font-medium bg-primary-50 text-primary-700 border border-primary-200">🔥 减脂餐</button>
+          <button class="px-4 py-2 rounded-full text-sm text-gray-500 border border-gray-200 hover:border-gray-300">💪 增肌餐</button>
+          <button class="px-4 py-2 rounded-full text-sm text-gray-500 border border-gray-200 hover:border-gray-300">🍬 控糖餐</button>
+        </div>
+
+        <!-- 模拟 AI 生成结果 -->
+        <div class="space-y-4">
+          <div class="p-4 bg-primary-50 rounded-lg">
+            <p class="text-xs text-primary-600 font-medium mb-2">🥞 早餐 · 约 380 kcal</p>
+            <p class="text-sm text-gray-700">全麦面包2片 + 水煮蛋1个 + 低脂牛奶200ml + 小番茄5颗</p>
+          </div>
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <p class="text-xs text-blue-600 font-medium mb-2">🍱 午餐 · 约 520 kcal</p>
+            <p class="text-sm text-gray-700">糙米饭150g + 清蒸鸡胸肉120g + 西兰花100g + 胡萝卜50g</p>
+          </div>
+          <div class="p-4 bg-purple-50 rounded-lg">
+            <p class="text-xs text-purple-600 font-medium mb-2">🥗 晚餐 · 约 350 kcal</p>
+            <p class="text-sm text-gray-700">藜麦沙拉 + 煎三文鱼100g + 菠菜 + 橄榄油5ml</p>
+          </div>
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <p class="text-xs text-gray-500 font-medium mb-2">🍎 加餐 · 约 150 kcal</p>
+            <p class="text-sm text-gray-700">希腊酸奶100g + 蓝莓50g + 核桃15g</p>
+          </div>
+        </div>
+
+        <p class="text-center text-xs text-gray-400 mt-6">🤖 由 AI 大模型根据你的健康档案生成 · 总热量约 1400 kcal</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
