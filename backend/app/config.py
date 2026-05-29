@@ -32,8 +32,8 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
     # ---------- YOLO ----------
-    YOLO_MODEL_PATH: str = os.getenv("YOLO_MODEL_PATH", "models/yolov8_food.pt")
-    YOLO_CONFIDENCE_THRESHOLD: float = 0.5
+    YOLO_MODEL_PATH: str = os.getenv("YOLO_MODEL_PATH", "models/yolov8n.pt")
+    YOLO_CONFIDENCE_THRESHOLD: float = float(os.getenv("YOLO_CONFIDENCE_THRESHOLD", "0.5"))
 
     # ---------- DeepSeek ----------
     DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
