@@ -43,7 +43,7 @@ export function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-100">
       <div className="w-full max-w-md px-8">
         <div className="text-center mb-8">
           <span className="text-5xl">🥗</span>

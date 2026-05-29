@@ -91,7 +91,7 @@ export function MealPlanner() {
         {text && (
           <div
             ref={containerRef}
-            className="mt-6 p-6 bg-gradient-to-br from-green-50 via-white to-blue-50 rounded-xl border border-gray-100 max-h-96 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-gray-700"
+            className="mt-6 p-6 bg-gradient-to-br from-primary-50 via-white to-primary-100 rounded-xl border border-gray-100 max-h-96 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-gray-700"
           >
             {text}
           </div>
