@@ -98,9 +98,8 @@ def _vision_predict(image_path: str) -> list[dict]:
                 ]
             }
         ],
-        "max_tokens": 500,
-        "temperature": 0.0,
-        "stream": False
+        "max_tokens": 1000,
+        "temperature": 0.0
     }
 
     logger.info(f"调用Vision API: {url}, model: {settings.DEEPSEEK_MODEL}")
