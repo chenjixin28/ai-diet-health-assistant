@@ -80,7 +80,7 @@ export function Dashboard() {
 
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
           <p className="text-sm text-gray-500">蛋白质</p>
-          <p className="text-3xl font-bold text-blue-600 mt-1">{dailyProtein.toFixed(1)}g</p>
+          <p className="text-3xl font-bold text-primary-600 mt-1">{dailyProtein.toFixed(1)}g</p>
           <p className="text-xs text-gray-400 mt-1">/ {proteinTarget}g 目标</p>
         </div>
 

@@ -1,55 +1,21 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Environment variables
+dist/
+build/
+.venv/
+venv/
 .env
-.env.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
 
 # Node
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Build
 dist/
-build/
-.next/
+
+# IDE
+.idea/
+.vscode/
+*.swp
 
 # OS
 .DS_Store
@@ -57,4 +23,15 @@ Thumbs.db
 
 # Uploads
 backend/uploads/
+
+# Training data (too large for GitHub)
+food_training/downloads/
+food_training/food_dataset/
+
+# Models
+*.pt
+*.pth
+*.onnx
+
+# Logs
 *.log

@@ -138,7 +138,7 @@ export function NutritionAnalysis() {
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2"><span className="w-3 h-3 bg-yellow-400 rounded-full" />碳水 {formatGram(todayCarb)}</div>
-                <div className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-500 rounded-full" />蛋白质 {formatGram(todayProtein)}</div>
+                <div className="flex items-center gap-2"><span className="w-3 h-3 bg-primary-500 rounded-full" />蛋白质 {formatGram(todayProtein)}</div>
                 <div className="flex items-center gap-2"><span className="w-3 h-3 bg-orange-500 rounded-full" />脂肪 {formatGram(todayFat)}</div>
               </div>
             </div>
@@ -152,8 +152,8 @@ export function NutritionAnalysis() {
           <div className="space-y-3">
             <div className="flex justify-between"><span className="text-sm text-gray-500">餐次记录</span><span className="font-semibold">{mealCount} 次</span></div>
             <div className="flex justify-between"><span className="text-sm text-gray-500">总热量</span><span className="font-semibold text-primary-600">{formatCalories(todayCal)}</span></div>
-            <div className="flex justify-between"><span className="text-sm text-gray-500">蛋白质</span><span className="font-semibold text-blue-600">{formatGram(todayProtein)}</span></div>
-            <div className="flex justify-between"><span className="text-sm text-gray-500">脂肪</span><span className="font-semibold text-accent-600">{formatGram(todayFat)}</span></div>
+            <div className="flex justify-between"><span className="text-sm text-gray-500">蛋白质</span><span className="font-semibold text-primary-600">{formatGram(todayProtein)}</span></div>
+            <div className="flex justify-between"><span className="text-sm text-gray-500">脂肪</span><span className="font-semibold text-primary-600">{formatGram(todayFat)}</span></div>
             <div className="flex justify-between"><span className="text-sm text-gray-500">碳水</span><span className="font-semibold text-yellow-600">{formatGram(todayCarb)}</span></div>
           </div>
         </div>
