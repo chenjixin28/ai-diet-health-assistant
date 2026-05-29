@@ -143,11 +143,11 @@ export function FoodRecognition() {
                     <div className="grid grid-cols-3 gap-2 text-center text-sm">
                       <div className="bg-gray-50 rounded-lg p-2">
                         <p className="text-xs text-gray-400">蛋白质</p>
-                        <p className="font-bold text-primary-600">{formatGram(item.protein)}</p>
+                        <p className="font-bold text-blue-600">{formatGram(item.protein)}</p>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-2">
                         <p className="text-xs text-gray-400">脂肪</p>
-                        <p className="font-bold text-primary-600">{formatGram(item.fat)}</p>
+                        <p className="font-bold text-accent-600">{formatGram(item.fat)}</p>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-2">
                         <p className="text-xs text-gray-400">碳水</p>
