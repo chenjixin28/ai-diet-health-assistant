@@ -1,5 +1,5 @@
 """
-食物识别服务 - 使用 DeepSeek Vision API
+食物识别服务 - 使用 SiliconFlow Vision API (Qwen2.5-VL)
 识别食物并计算卡路里，伪装成 YOLO 输出格式
 """
 
@@ -25,7 +25,7 @@ def predict_food_from_image(image_path: str) -> list[dict]:
     mode = getattr(settings, 'FOOD_RECOGNITION_MODE', 'mock').lower()
 
     if mode == 'deepseek':
-        return _deepseek_vision_predict(image_path)
+        return _vision_predict(image_path)
     elif mode == 'yolo':
         model_path = Path(settings.YOLO_MODEL_PATH)
         if model_path.exists():
@@ -69,7 +69,7 @@ def _image_to_base64(image_path: str) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-def _deepseek_vision_predict(image_path: str) -> list[dict]:
+def _vision_predict(image_path: str) -> list[dict]:
     try:
         api_key = getattr(settings, 'DEEPSEEK_API_KEY', '')
         if not api_key:
