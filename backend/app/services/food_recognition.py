@@ -80,29 +80,7 @@ def _vision_predict(image_path: str) -> list[dict]:
         "Content-Type": "application/json"
     }
 
-    prompt = """你是一个专业的食物识别和营养分析AI。请分析这张食物图片，识别其中的食物并计算营养信息。
-
-请严格按照以下JSON格式返回，不要返回任何其他文字：
-[
-  {
-    "food_name": "食物名称（中文）",
-    "confidence": 0.95,
-    "calories": 200,
-    "protein": 10.5,
-    "fat": 5.2,
-    "carbohydrates": 30.0,
-    "serving_size": "约200g"
-  }
-]
-
-要求：
-1. food_name 必须是中文食物名称
-2. confidence 是识别置信度，0到1之间
-3. calories 是该食物一份的热量（千卡）
-4. protein/fat/carbohydrates 单位为克
-5. serving_size 是估算的一份大小
-6. 如果图片中有多种食物，都列出来
-7. 如果图片中没有食物，返回空数组 []"""
+    prompt = """识别图片中的食物并返回JSON：[{"food_name":"食物名","confidence":0.95,"calories":200,"protein":10.5,"fat":5.2,"carbohydrates":30.0,"serving_size":"约200g"}]"""
 
     payload = {
         "model": settings.DEEPSEEK_MODEL,
@@ -120,8 +98,9 @@ def _vision_predict(image_path: str) -> list[dict]:
                 ]
             }
         ],
-        "max_tokens": 1000,
-        "temperature": 0.1
+        "max_tokens": 500,
+        "temperature": 0.0,
+        "stream": False
     }
 
     logger.info(f"调用Vision API: {url}, model: {settings.DEEPSEEK_MODEL}")
