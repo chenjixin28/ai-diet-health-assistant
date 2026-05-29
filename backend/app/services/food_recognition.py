@@ -139,12 +139,27 @@ def _vision_predict(image_path: str) -> list[dict]:
         content = result['choices'][0]['message']['content']
         logger.info(f"Vision API返回内容: {content[:200]}")
 
-        json_str = content
-        if '```' in content:
-            json_str = content.split('```')[1]
-            if json_str.startswith('json'):
-                json_str = json_str[4:]
-            json_str = json_str.strip()
+        json_str = content.strip()
+
+        if json_str.startswith('```'):
+            parts = json_str.split('```')
+            for i in range(1, len(parts), 2):
+                part = parts[i].strip()
+                if part.startswith('json'):
+                    part = part[4:].strip()
+                if part.startswith('[') or part.startswith('{'):
+                    json_str = part
+                    break
+            else:
+                part = parts[1].strip()
+                if part.startswith('json'):
+                    part = part[4:].strip()
+                json_str = part
+
+        start = json_str.find('[')
+        end = json_str.rfind(']') + 1
+        if start != -1 and end > start:
+            json_str = json_str[start:end]
 
         try:
             foods = json.loads(json_str)
