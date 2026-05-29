@@ -16,7 +16,7 @@ from app.schemas.food import (
     FoodSearchQuery,
 )
 from app.schemas.user import ApiResponse
-from app.services.food_recognition import predict_food_from_image
+from app.services.food_recognition import predict_food_from_image, VisionAPIError
 from app.services.nutrition_calculator import search_food_by_name
 from app.api.deps import get_current_user
 
@@ -43,7 +43,10 @@ async def recognize_food_image(
     filepath = settings.UPLOAD_DIR / filename
     filepath.write_bytes(file_data)
 
-    items = predict_food_from_image(str(filepath))
+    try:
+        items = predict_food_from_image(str(filepath))
+    except VisionAPIError as e:
+        return FoodRecognizeResponse(success=False, detail=str(e))
 
     return FoodRecognizeResponse(
         success=True,

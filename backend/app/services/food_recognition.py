@@ -1,28 +1,25 @@
 """
-食物识别服务 - 使用 SiliconFlow Vision API (Qwen2.5-VL)
+食物识别服务 - 使用 SiliconFlow Vision API (Kimi-K2.5)
 识别食物并计算卡路里，伪装成 YOLO 输出格式
 """
 
 from pathlib import Path
 import base64
 import json
+import logging
 import httpx
 from app.config import settings
 
+logger = logging.getLogger(__name__)
 
-_yolo_model = None
 
-
-def _get_model():
-    global _yolo_model
-    if _yolo_model is None:
-        from ultralytics import YOLO
-        _yolo_model = YOLO(str(settings.YOLO_MODEL_PATH))
-    return _yolo_model
+class VisionAPIError(Exception):
+    pass
 
 
 def predict_food_from_image(image_path: str) -> list[dict]:
     mode = getattr(settings, 'FOOD_RECOGNITION_MODE', 'mock').lower()
+    logger.info(f"食物识别模式: {mode}")
 
     if mode == 'deepseek':
         return _vision_predict(image_path)
@@ -30,6 +27,7 @@ def predict_food_from_image(image_path: str) -> list[dict]:
         model_path = Path(settings.YOLO_MODEL_PATH)
         if model_path.exists():
             return _real_predict(image_path)
+        logger.warning(f"YOLO模型文件不存在: {model_path}，回退到模拟数据")
         return _mock_predict(image_path)
     else:
         return _mock_predict(image_path)
@@ -70,20 +68,19 @@ def _image_to_base64(image_path: str) -> str:
 
 
 def _vision_predict(image_path: str) -> list[dict]:
-    try:
-        api_key = getattr(settings, 'DEEPSEEK_API_KEY', '')
-        if not api_key:
-            return _mock_predict(image_path)
+    api_key = getattr(settings, 'DEEPSEEK_API_KEY', '')
+    if not api_key:
+        raise VisionAPIError("API Key 未配置，请在 .env 中设置 DEEPSEEK_API_KEY")
 
-        img_base64 = _image_to_base64(image_path)
+    img_base64 = _image_to_base64(image_path)
 
-        url = f"{settings.DEEPSEEK_API_BASE}/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
+    url = f"{settings.DEEPSEEK_API_BASE}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
 
-        prompt = """你是一个专业的食物识别和营养分析AI。请分析这张食物图片，识别其中的食物并计算营养信息。
+    prompt = """你是一个专业的食物识别和营养分析AI。请分析这张食物图片，识别其中的食物并计算营养信息。
 
 请严格按照以下JSON格式返回，不要返回任何其他文字：
 [
@@ -107,75 +104,104 @@ def _vision_predict(image_path: str) -> list[dict]:
 6. 如果图片中有多种食物，都列出来
 7. 如果图片中没有食物，返回空数组 []"""
 
-        payload = {
-            "model": settings.DEEPSEEK_MODEL,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{img_base64}"
-                            }
+    payload = {
+        "model": settings.DEEPSEEK_MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{img_base64}"
                         }
-                    ]
-                }
-            ],
-            "max_tokens": 1000,
-            "temperature": 0.1
-        }
+                    }
+                ]
+            }
+        ],
+        "max_tokens": 1000,
+        "temperature": 0.1
+    }
 
-        response = httpx.post(url, json=payload, headers=headers, timeout=60)
-        result = response.json()
+    logger.info(f"调用Vision API: {url}, model: {settings.DEEPSEEK_MODEL}")
 
-        if 'error' in result:
-            return _mock_predict(image_path)
+    try:
+        with httpx.Client(trust_env=False) as client:
+            response = client.post(url, json=payload, headers=headers, timeout=60)
+    except httpx.TimeoutException:
+        raise VisionAPIError("AI识别服务请求超时，请稍后重试")
+    except httpx.ConnectError:
+        raise VisionAPIError("无法连接AI识别服务，请检查网络")
 
-        predictions = []
-        if 'choices' in result and len(result['choices']) > 0:
-            content = result['choices'][0]['message']['content']
+    result = response.json()
 
-            json_str = content
-            if '```' in content:
-                json_str = content.split('```')[1]
-                if json_str.startswith('json'):
-                    json_str = json_str[4:]
-                json_str = json_str.strip()
+    if response.status_code == 403:
+        err_msg = result.get('message', '') if isinstance(result, dict) else ''
+        if 'balance' in err_msg.lower() or 'insufficient' in err_msg.lower():
+            raise VisionAPIError("AI识别服务余额不足，请充值后重试")
+        raise VisionAPIError(f"AI识别服务拒绝访问: {err_msg}")
 
-            try:
-                foods = json.loads(json_str)
-            except json.JSONDecodeError:
-                start = content.find('[')
-                end = content.rfind(']') + 1
-                if start != -1 and end > start:
-                    foods = json.loads(content[start:end])
-                else:
-                    foods = []
+    if response.status_code == 401:
+        raise VisionAPIError("API Key 无效，请检查 DEEPSEEK_API_KEY 配置")
 
-            if isinstance(foods, dict):
-                foods = [foods]
+    if 'error' in result:
+        err_info = result['error']
+        err_msg = err_info.get('message', str(err_info)) if isinstance(err_info, dict) else str(err_info)
+        logger.error(f"Vision API返回错误: {err_info}")
+        raise VisionAPIError(f"AI识别服务错误: {err_msg}")
 
-            for food in foods:
-                name = food.get('food_name', food.get('name', ''))
-                if not name:
-                    continue
+    if response.status_code != 200:
+        logger.error(f"Vision API HTTP错误: {response.status_code}, {result}")
+        raise VisionAPIError(f"AI识别服务返回异常状态码: {response.status_code}")
 
-                predictions.append({
-                    "food_name": name,
-                    "confidence": round(float(food.get('confidence', 0.8)), 2),
-                    "calories": int(food.get('calories', 0)),
-                    "protein": round(float(food.get('protein', 0)), 1),
-                    "fat": round(float(food.get('fat', 0)), 1),
-                    "carbohydrates": round(float(food.get('carbohydrates', 0)), 1),
-                    "serving_size": food.get('serving_size', '约100g'),
-                })
+    predictions = []
+    if 'choices' in result and len(result['choices']) > 0:
+        content = result['choices'][0]['message']['content']
+        logger.info(f"Vision API返回内容: {content[:200]}")
 
-        return predictions if predictions else _mock_predict(image_path)
+        json_str = content
+        if '```' in content:
+            json_str = content.split('```')[1]
+            if json_str.startswith('json'):
+                json_str = json_str[4:]
+            json_str = json_str.strip()
 
-    except Exception:
-        return _mock_predict(image_path)
+        try:
+            foods = json.loads(json_str)
+        except json.JSONDecodeError:
+            start = content.find('[')
+            end = content.rfind(']') + 1
+            if start != -1 and end > start:
+                foods = json.loads(content[start:end])
+            else:
+                logger.warning(f"无法解析Vision API返回的JSON: {content[:200]}")
+                foods = []
+
+        if isinstance(foods, dict):
+            foods = [foods]
+
+        for food in foods:
+            name = food.get('food_name', food.get('name', ''))
+            if not name:
+                continue
+
+            predictions.append({
+                "food_name": name,
+                "confidence": round(float(food.get('confidence', 0.8)), 2),
+                "calories": int(food.get('calories', 0)),
+                "protein": round(float(food.get('protein', 0)), 1),
+                "fat": round(float(food.get('fat', 0)), 1),
+                "carbohydrates": round(float(food.get('carbohydrates', 0)), 1),
+                "serving_size": food.get('serving_size', '约100g'),
+            })
+
+    if predictions:
+        logger.info(f"Vision API识别成功: {predictions}")
+        return predictions
+    else:
+        logger.warning("Vision API未识别到食物")
+        return []
 
 
 def _mock_predict(image_path: str) -> list[dict]:
