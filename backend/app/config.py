@@ -29,21 +29,19 @@ class Settings:
     # ---------- JWT ----------
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me-in-production-use-a-long-random-string")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24h
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
-    # ---------- AI ----------
+    # ---------- YOLO ----------
     YOLO_MODEL_PATH: str = os.getenv("YOLO_MODEL_PATH", "models/yolov8_food.pt")
     YOLO_CONFIDENCE_THRESHOLD: float = 0.5
-    LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
-    LLM_API_BASE: str = os.getenv("LLM_API_BASE", "https://api.openai.com/v1")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
-    
-    FOOD_RECOGNITION_MODE: str = os.getenv("FOOD_RECOGNITION_MODE", "mock")
-    BAIDU_API_KEY: str = os.getenv("BAIDU_API_KEY", "")
-    BAIDU_SECRET_KEY: str = os.getenv("BAIDU_SECRET_KEY", "")
-    ALIYUN_API_KEY: str = os.getenv("ALIYUN_API_KEY", "")
-    TENCENT_SECRET_ID: str = os.getenv("TENCENT_SECRET_ID", "")
-    TENCENT_SECRET_KEY: str = os.getenv("TENCENT_SECRET_KEY", "")
+
+    # ---------- DeepSeek ----------
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
+    DEEPSEEK_API_BASE: str = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com")
+    DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+
+    # ---------- 食物识别模式 ----------
+    FOOD_RECOGNITION_MODE: str = os.getenv("FOOD_RECOGNITION_MODE", "deepseek")
 
     # ---------- 文件上传 ----------
     UPLOAD_DIR: Path = BASE_DIR / "uploads"

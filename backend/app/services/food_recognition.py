@@ -1,14 +1,13 @@
 """
-YOLOv8 食物识别服务（伪装版）
-支持多种免费AI视觉API：百度/阿里/腾讯/OpenAI，伪装成YOLO输出格式
+食物识别服务 - 使用 DeepSeek Vision API
+识别食物并计算卡路里，伪装成 YOLO 输出格式
 """
 
 from pathlib import Path
 import base64
+import json
 import httpx
-import random
 from app.config import settings
-from app.services.nutrition_calculator import recognize_food, search_food_by_name
 
 
 _yolo_model = None
@@ -23,28 +22,21 @@ def _get_model():
 
 
 def predict_food_from_image(image_path: str) -> list[dict]:
-    model_path = Path(settings.YOLO_MODEL_PATH)
-    
-    if hasattr(settings, 'FOOD_RECOGNITION_MODE'):
-        mode = settings.FOOD_RECOGNITION_MODE.lower()
-    else:
-        mode = 'mock'
-    
-    if mode == 'yolo' and model_path.exists():
-        return _real_predict(image_path)
-    elif mode == 'baidu':
-        return _baidu_vision_predict(image_path)
-    elif mode == 'aliyun':
-        return _aliyun_vision_predict(image_path)
-    elif mode == 'tencent':
-        return _tencent_vision_predict(image_path)
-    elif mode == 'openai':
-        return _openai_vision_predict(image_path)
+    mode = getattr(settings, 'FOOD_RECOGNITION_MODE', 'mock').lower()
+
+    if mode == 'deepseek':
+        return _deepseek_vision_predict(image_path)
+    elif mode == 'yolo':
+        model_path = Path(settings.YOLO_MODEL_PATH)
+        if model_path.exists():
+            return _real_predict(image_path)
+        return _mock_predict(image_path)
     else:
         return _mock_predict(image_path)
 
 
 def _real_predict(image_path: str) -> list[dict]:
+    from app.services.nutrition_calculator import recognize_food
     model = _get_model()
     results = model(image_path, conf=settings.YOLO_CONFIDENCE_THRESHOLD)
 
@@ -77,181 +69,111 @@ def _image_to_base64(image_path: str) -> str:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-def _baidu_vision_predict(image_path: str) -> list[dict]:
+def _deepseek_vision_predict(image_path: str) -> list[dict]:
     try:
-        api_key = getattr(settings, 'BAIDU_API_KEY', '')
-        secret_key = getattr(settings, 'BAIDU_SECRET_KEY', '')
-        
-        if not api_key or not secret_key:
-            return _mock_predict(image_path)
-        
-        token_url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={api_key}&client_secret={secret_key}"
-        token_response = httpx.post(token_url, timeout=10)
-        access_token = token_response.json().get('access_token', '')
-        
-        if not access_token:
-            return _mock_predict(image_path)
-        
-        img_base64 = _image_to_base64(image_path)
-        url = f"https://aip.baidubce.com/rest/2.0/image-classify/v2/advanced_general?access_token={access_token}"
-        
-        response = httpx.post(url, data={"image": img_base64}, timeout=10)
-        result = response.json()
-        
-        predictions = []
-        if 'result' in result:
-            for item in result['result']:
-                keyword = item.get('keyword', '')
-                score = item.get('score', 0)
-                
-                nutrition = recognize_food(keyword)
-                if nutrition and score > 0.3:
-                    predictions.append({
-                        "food_name": nutrition["food_name"],
-                        "confidence": round(score, 2),
-                        "calories": nutrition["calories"],
-                        "protein": nutrition["protein"],
-                        "fat": nutrition["fat"],
-                        "carbohydrates": nutrition["carbohydrates"],
-                        "serving_size": nutrition["serving_size"],
-                    })
-                    if len(predictions) >= 3:
-                        break
-        
-        return predictions if predictions else _mock_predict(image_path)
-        
-    except Exception:
-        return _mock_predict(image_path)
-
-
-def _aliyun_vision_predict(image_path: str) -> list[dict]:
-    try:
-        api_key = getattr(settings, 'ALIYUN_API_KEY', '')
-        
+        api_key = getattr(settings, 'DEEPSEEK_API_KEY', '')
         if not api_key:
             return _mock_predict(image_path)
-        
+
         img_base64 = _image_to_base64(image_path)
-        url = "https://vision.cn-beijing.aliyuncs.com/api/v1/services/vision/tagging/analyze"
-        
+
+        url = f"{settings.DEEPSEEK_API_BASE}/chat/completions"
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
-        
-        response = httpx.post(url, json={"image": img_base64}, headers=headers, timeout=10)
-        result = response.json()
-        
-        predictions = []
-        if 'data' in result and 'tags' in result['data']:
-            for item in result['data']['tags']:
-                tag_name = item.get('tagName', '')
-                confidence = item.get('confidence', 0)
-                
-                nutrition = recognize_food(tag_name)
-                if nutrition and confidence > 0.5:
-                    predictions.append({
-                        "food_name": nutrition["food_name"],
-                        "confidence": round(confidence, 2),
-                        "calories": nutrition["calories"],
-                        "protein": nutrition["protein"],
-                        "fat": nutrition["fat"],
-                        "carbohydrates": nutrition["carbohydrates"],
-                        "serving_size": nutrition["serving_size"],
-                    })
-                    if len(predictions) >= 3:
-                        break
-        
-        return predictions if predictions else _mock_predict(image_path)
-        
-    except Exception:
-        return _mock_predict(image_path)
 
+        prompt = """你是一个专业的食物识别和营养分析AI。请分析这张食物图片，识别其中的食物并计算营养信息。
 
-def _tencent_vision_predict(image_path: str) -> list[dict]:
-    try:
-        secret_id = getattr(settings, 'TENCENT_SECRET_ID', '')
-        secret_key = getattr(settings, 'TENCENT_SECRET_KEY', '')
-        
-        if not secret_id or not secret_key:
-            return _mock_predict(image_path)
-        
-        img_base64 = _image_to_base64(image_path)
-        
-        predictions = _mock_predict(image_path)
-        for pred in predictions:
-            pred["confidence"] = round(random.uniform(0.75, 0.95), 2)
-        
-        return predictions
-        
-    except Exception:
-        return _mock_predict(image_path)
+请严格按照以下JSON格式返回，不要返回任何其他文字：
+[
+  {
+    "food_name": "食物名称（中文）",
+    "confidence": 0.95,
+    "calories": 200,
+    "protein": 10.5,
+    "fat": 5.2,
+    "carbohydrates": 30.0,
+    "serving_size": "约200g"
+  }
+]
 
+要求：
+1. food_name 必须是中文食物名称
+2. confidence 是识别置信度，0到1之间
+3. calories 是该食物一份的热量（千卡）
+4. protein/fat/carbohydrates 单位为克
+5. serving_size 是估算的一份大小
+6. 如果图片中有多种食物，都列出来
+7. 如果图片中没有食物，返回空数组 []"""
 
-def _openai_vision_predict(image_path: str) -> list[dict]:
-    try:
-        api_key = getattr(settings, 'LLM_API_KEY', '')
-        api_base = getattr(settings, 'LLM_API_BASE', 'https://api.openai.com/v1')
-        
-        if not api_key:
-            return _mock_predict(image_path)
-        
-        img_base64 = _image_to_base64(image_path)
-        
-        url = f"{api_base}/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        prompt = """分析这张食物图片，识别其中的食物。
-返回格式：JSON数组，每个食物包含 name（食物名称）和 confidence（置信度0-1）。
-只返回JSON，不要其他文字。
-示例：[{"name":"苹果","confidence":0.92}]"""
-        
         payload = {
-            "model": "gpt-4o-mini",
+            "model": settings.DEEPSEEK_MODEL,
             "messages": [
                 {
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{img_base64}"
+                            }
+                        }
                     ]
                 }
             ],
-            "max_tokens": 300
+            "max_tokens": 1000,
+            "temperature": 0.1
         }
-        
-        response = httpx.post(url, json=payload, headers=headers, timeout=30)
+
+        response = httpx.post(url, json=payload, headers=headers, timeout=60)
         result = response.json()
-        
+
+        if 'error' in result:
+            return _mock_predict(image_path)
+
         predictions = []
         if 'choices' in result and len(result['choices']) > 0:
             content = result['choices'][0]['message']['content']
+
+            json_str = content
+            if '```' in content:
+                json_str = content.split('```')[1]
+                if json_str.startswith('json'):
+                    json_str = json_str[4:]
+                json_str = json_str.strip()
+
             try:
-                import json
-                foods = json.loads(content)
-                for food in foods:
-                    name = food.get('name', '')
-                    conf = food.get('confidence', 0.8)
-                    
-                    nutrition = recognize_food(name)
-                    if nutrition:
-                        predictions.append({
-                            "food_name": nutrition["food_name"],
-                            "confidence": round(conf, 2),
-                            "calories": nutrition["calories"],
-                            "protein": nutrition["protein"],
-                            "fat": nutrition["fat"],
-                            "carbohydrates": nutrition["carbohydrates"],
-                            "serving_size": nutrition["serving_size"],
-                        })
-            except Exception:
-                pass
-        
+                foods = json.loads(json_str)
+            except json.JSONDecodeError:
+                start = content.find('[')
+                end = content.rfind(']') + 1
+                if start != -1 and end > start:
+                    foods = json.loads(content[start:end])
+                else:
+                    foods = []
+
+            if isinstance(foods, dict):
+                foods = [foods]
+
+            for food in foods:
+                name = food.get('food_name', food.get('name', ''))
+                if not name:
+                    continue
+
+                predictions.append({
+                    "food_name": name,
+                    "confidence": round(float(food.get('confidence', 0.8)), 2),
+                    "calories": int(food.get('calories', 0)),
+                    "protein": round(float(food.get('protein', 0)), 1),
+                    "fat": round(float(food.get('fat', 0)), 1),
+                    "carbohydrates": round(float(food.get('carbohydrates', 0)), 1),
+                    "serving_size": food.get('serving_size', '约100g'),
+                })
+
         return predictions if predictions else _mock_predict(image_path)
-        
+
     except Exception:
         return _mock_predict(image_path)
 
