@@ -21,18 +21,36 @@ class VisionAPIError(Exception):
     pass
 
 
+_NON_FOOD_NAMES = {"瓶子", "碗", "盘子", "杯子"}
+
 def predict_food_from_image(image_path: str) -> list[dict]:
     mode = getattr(settings, 'FOOD_RECOGNITION_MODE', 'mock').lower()
     logger.info(f"食物识别模式: {mode}")
 
     if mode == 'deepseek':
         return _vision_predict(image_path)
+
     elif mode == 'yolo':
         model_path = Path(settings.YOLO_MODEL_PATH)
         if model_path.exists():
-            return _real_predict(image_path)
-        logger.warning(f"YOLO模型文件不存在: {model_path}，回退到模拟数据")
-        return _mock_predict(image_path)
+            yolo_results = _real_predict(image_path)
+            food_results = [r for r in yolo_results if r["food_name"] not in _NON_FOOD_NAMES]
+            if food_results:
+                logger.info(f"YOLO识别到 {len(food_results)} 种食物，直接返回")
+                return food_results
+            logger.info("YOLO未识别到有效食物，自动降级到 Vision API")
+            try:
+                return _vision_predict(image_path)
+            except VisionAPIError as e:
+                logger.warning(f"Vision API降级失败: {e}")
+                if yolo_results:
+                    logger.info("返回YOLO原始结果")
+                    return yolo_results
+                raise
+        else:
+            logger.warning(f"YOLO模型文件不存在: {model_path}，回退到Vision API")
+            return _vision_predict(image_path)
+
     else:
         return _mock_predict(image_path)
 
