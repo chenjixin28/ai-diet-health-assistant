@@ -3,6 +3,8 @@ chcp 65001 >nul
 title AI饮食健康助手 - 启动中...
 
 set PYTHON_PATH=C:\Users\hgdcy\AppData\Local\Programs\Python\Python313\python.exe
+set NODE_PATH=F:\nodejs\extracted\node-v22.15.0-win-x64
+set PATH=%NODE_PATH%;%PATH%
 
 echo.
 echo  ============================================
@@ -22,13 +24,13 @@ for /f "tokens=2" %%v in ('"%PYTHON_PATH%" --version 2^>^&1') do echo  ✅ Pytho
 
 REM ---------- 检查 Node.js ----------
 echo  [2/4] 检查 Node.js...
-node --version >nul 2>&1
+"%NODE_PATH%\node.exe" --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo  ❌ 未检测到 Node.js，请先安装 Node.js 18+
     pause
     exit /b 1
 )
-for /f "tokens=1 delims=v" %%v in ('node --version 2^>^&1') do echo  ✅ Node.js %%v
+for /f "tokens=1 delims=v" %%v in ('"%NODE_PATH%\node.exe" --version 2^>^&1') do echo  ✅ Node.js %%v
 
 REM ---------- 安装后端依赖 ----------
 echo  [3/4] 安装后端依赖...
@@ -39,7 +41,7 @@ REM ---------- 安装前端依赖 ----------
 echo  [4/4] 安装前端依赖...
 cd /d "%~dp0frontend"
 if not exist "node_modules\" (
-    call npm install --registry https://registry.npmmirror.com
+    "%NODE_PATH%\npm.cmd" install --registry https://registry.npmmirror.com
 )
 
 echo.
@@ -57,11 +59,11 @@ echo.
 
 REM ---------- 启动后端 ----------
 cd /d "%~dp0backend"
-start "AI饮食-后端" cmd /c ""%PYTHON_PATH%" -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+start "AI饮食-后端" cmd /c ""%PYTHON_PATH%" -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
 REM ---------- 启动前端 ----------
 cd /d "%~dp0frontend"
-start "AI饮食-前端" cmd /c "npm run dev"
+start "AI饮食-前端" cmd /c ""%NODE_PATH%\npm.cmd" run dev"
 
 echo ✅ 两个服务已启动，正在打开浏览器...
 timeout /t 3 /nobreak >nul
