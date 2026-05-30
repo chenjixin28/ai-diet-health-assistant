@@ -22,7 +22,7 @@ FOOD_NUTRITION_DB: list[dict] = [
         "serving_size": "100g",
     },
     {
-        "keywords": ["青菜", "炒青菜", "油菜", "小白菜", "broccoli"],
+        "keywords": ["青菜", "炒青菜", "油菜", "小白菜"],
         "food_name": "炒青菜",
         "calories": 35,
         "protein": 2.0,
@@ -282,6 +282,150 @@ FOOD_NUTRITION_DB: list[dict] = [
         "carbohydrates": 3.9,
         "serving_size": "1个(150g)",
     },
+    {
+        "keywords": ["炒饭", "蛋炒饭", "fried rice"],
+        "food_name": "炒饭",
+        "calories": 188,
+        "protein": 6.0,
+        "fat": 7.0,
+        "carbohydrates": 28.0,
+        "serving_size": "1份(250g)",
+    },
+    {
+        "keywords": ["包子", "肉包", "小笼包", "steamed bun", "bao"],
+        "food_name": "包子",
+        "calories": 220,
+        "protein": 10.0,
+        "fat": 8.0,
+        "carbohydrates": 28.0,
+        "serving_size": "3个(150g)",
+    },
+    {
+        "keywords": ["粥", "白粥", "小米粥", "congee", "porridge"],
+        "food_name": "粥",
+        "calories": 46,
+        "protein": 1.1,
+        "fat": 0.3,
+        "carbohydrates": 9.7,
+        "serving_size": "1碗(300ml)",
+    },
+    {
+        "keywords": ["春卷", "spring roll"],
+        "food_name": "春卷",
+        "calories": 200,
+        "protein": 6.0,
+        "fat": 10.0,
+        "carbohydrates": 22.0,
+        "serving_size": "3个(100g)",
+    },
+    {
+        "keywords": ["馄饨", "抄手", "wonton"],
+        "food_name": "馄饨",
+        "calories": 218,
+        "protein": 9.0,
+        "fat": 7.0,
+        "carbohydrates": 28.0,
+        "serving_size": "10个(200g)",
+    },
+    {
+        "keywords": ["烤鸭", "北京烤鸭", "roast duck"],
+        "food_name": "烤鸭",
+        "calories": 340,
+        "protein": 19.0,
+        "fat": 28.0,
+        "carbohydrates": 0.0,
+        "serving_size": "100g",
+    },
+    {
+        "keywords": ["火锅", "hot pot"],
+        "food_name": "火锅",
+        "calories": 800,
+        "protein": 50.0,
+        "fat": 50.0,
+        "carbohydrates": 30.0,
+        "serving_size": "1人份",
+    },
+    {
+        "keywords": ["宫保鸡丁", "kung pao chicken"],
+        "food_name": "宫保鸡丁",
+        "calories": 230,
+        "protein": 20.0,
+        "fat": 14.0,
+        "carbohydrates": 8.0,
+        "serving_size": "1份(200g)",
+    },
+    {
+        "keywords": ["麻婆豆腐", "mapo tofu"],
+        "food_name": "麻婆豆腐",
+        "calories": 130,
+        "protein": 8.0,
+        "fat": 9.0,
+        "carbohydrates": 5.0,
+        "serving_size": "1份(200g)",
+    },
+    {
+        "keywords": ["西红柿炒蛋", "番茄炒蛋", "scrambled eggs with tomato"],
+        "food_name": "西红柿炒蛋",
+        "calories": 110,
+        "protein": 7.0,
+        "fat": 6.0,
+        "carbohydrates": 6.0,
+        "serving_size": "1份(200g)",
+    },
+    {
+        "keywords": ["糖醋里脊", "sweet sour pork"],
+        "food_name": "糖醋里脊",
+        "calories": 280,
+        "protein": 18.0,
+        "fat": 14.0,
+        "carbohydrates": 22.0,
+        "serving_size": "1份(200g)",
+    },
+    {
+        "keywords": ["麻辣烫", "malatang"],
+        "food_name": "麻辣烫",
+        "calories": 450,
+        "protein": 25.0,
+        "fat": 20.0,
+        "carbohydrates": 40.0,
+        "serving_size": "1份(400g)",
+    },
+    {
+        "keywords": ["月饼", "mooncake"],
+        "food_name": "月饼",
+        "calories": 420,
+        "protein": 6.0,
+        "fat": 20.0,
+        "carbohydrates": 55.0,
+        "serving_size": "1个(100g)",
+    },
+    {
+        "keywords": ["粽子", "zongzi"],
+        "food_name": "粽子",
+        "calories": 280,
+        "protein": 8.0,
+        "fat": 10.0,
+        "carbohydrates": 40.0,
+        "serving_size": "1个(150g)",
+    },
+    {
+        "keywords": ["土豆", "马铃薯", "potato"],
+        "food_name": "土豆",
+        "calories": 81,
+        "protein": 2.0,
+        "fat": 0.1,
+        "carbohydrates": 17.5,
+        "serving_size": "100g",
+    },
+    {
+        "keywords": ["黄瓜", "cucumber"],
+        "food_name": "黄瓜",
+        "calories": 16,
+        "protein": 0.8,
+        "fat": 0.1,
+        "carbohydrates": 2.9,
+        "serving_size": "100g",
+    },
 ]
 
 
@@ -294,7 +438,11 @@ def recognize_food(food_description: str) -> Optional[dict]:
         for kw in item["keywords"]:
             kw_lower = kw.lower()
             if kw_lower in desc_lower:
-                score = len(kw_lower)
+                score = len(kw_lower) * 10
+                if desc_lower == kw_lower:
+                    score += 100
+                elif desc_lower.startswith(kw_lower) or desc_lower.endswith(kw_lower):
+                    score += 20
                 if score > best_score:
                     best_score = score
                     best_match = item
