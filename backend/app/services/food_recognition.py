@@ -2,7 +2,7 @@
 食物识别服务 - 支持多种识别模式：
 - mock: 模拟数据（用于测试）
 - deepseek: 使用DeepSeek Vision API
-- yolo: 使用本地YOLO模型
+- yolo: 使用本地YOLO模型（支持YOLO-World开放词汇检测）
 """
 
 from pathlib import Path
@@ -14,7 +14,6 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# 全局模型缓存
 _model = None
 
 
@@ -39,13 +38,13 @@ def predict_food_from_image(image_path: str) -> list[dict]:
 
 
 def _get_model():
-    """获取YOLO模型（单例模式，避免重复加载）"""
     global _model
     if _model is None:
         from ultralytics import YOLO
         model_path = Path(settings.YOLO_MODEL_PATH)
         logger.info(f"加载YOLO模型: {model_path}")
         _model = YOLO(str(model_path))
+        logger.info(f"模型类别: {list(_model.names.values())[:10]}... (共{len(_model.names)}类)")
     return _model
 
 
@@ -63,7 +62,6 @@ def _real_predict(image_path: str) -> list[dict]:
             conf = float(box.conf[0])
             class_name = model.names.get(cls_id, f"object_{cls_id}")
 
-            # 尝试识别为食物，如果识别不到则跳过
             nutrition = recognize_food(class_name)
             if nutrition:
                 predictions.append({
