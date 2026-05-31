@@ -10,6 +10,7 @@ export function FoodRecognition() {
   const [loading, setLoading] = useState(false)
   const [addingIdx, setAddingIdx] = useState<number | null>(null)
   const [mealType, setMealType] = useState('lunch')
+  const [addAllLoading, setAddAllLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack']
@@ -61,11 +62,39 @@ export function FoodRecognition() {
     }
   }
 
+  const handleAddAll = async () => {
+    if (results.length === 0) return
+    setAddAllLoading(true)
+    let successCount = 0
+    for (const item of results) {
+      try {
+        await foodApi.addRecord({
+          food_name: item.food_name,
+          meal_type: mealType,
+          calories: item.calories,
+          protein: item.protein,
+          fat: item.fat,
+          carbohydrates: item.carbohydrates,
+          serving_size: item.serving_size,
+        })
+        successCount++
+      } catch {
+      }
+    }
+    if (successCount > 0) {
+      showToast(`已添加 ${successCount} 种食物到${getMealTypeLabel(mealType)}记录`, 'success')
+      setResults([])
+    } else {
+      showToast('添加失败，请重试', 'error')
+    }
+    setAddAllLoading(false)
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">📸 食物识别</h1>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap items-center">
         {mealTypes.map((mt) => (
           <button
             key={mt}
@@ -79,6 +108,15 @@ export function FoodRecognition() {
             {getMealTypeLabel(mt)}
           </button>
         ))}
+        {results.length > 1 && (
+          <button
+            onClick={handleAddAll}
+            disabled={addAllLoading}
+            className="ml-auto px-5 py-2 rounded-full text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+          >
+            {addAllLoading ? '添加中...' : `一键添加全部到${getMealTypeLabel(mealType)}`}
+          </button>
+        )}
       </div>
 
       <input
@@ -125,7 +163,7 @@ export function FoodRecognition() {
             {loading ? (
               <div className="bg-white rounded-xl p-10 shadow-sm border border-gray-100 text-center">
                 <div className="animate-spin w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full mx-auto mb-4" />
-                <p className="text-gray-500">AI 正在识别中...</p>
+                <p className="text-gray-500">YOLO模型识别中...</p>
               </div>
             ) : results.length > 0 ? (
               <div className="space-y-3">

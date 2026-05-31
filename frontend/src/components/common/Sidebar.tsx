@@ -2,10 +2,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 
 const navItems = [
-  { path: '/dashboard', label: '仪表板', icon: '📊' },
+  { path: '/dashboard',   label: '健康中心', icon: '📊' },
   { path: '/recognition', label: '食物识别', icon: '📸' },
   { path: '/nutrition', label: '营养分析', icon: '📋' },
   { path: '/meal-planner', label: '食谱推荐', icon: '🍽️' },
+  { path: '/checkin', label: '打卡成就', icon: '🏆' },
 ]
 
 export function Sidebar() {

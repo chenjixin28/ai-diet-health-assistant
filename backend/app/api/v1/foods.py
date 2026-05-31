@@ -142,3 +142,22 @@ def search_food(
         detail=f"找到 {len(results)} 个结果",
         data={"foods": results},
     )
+
+
+@router.delete("/records/{record_id}", response_model=ApiResponse)
+def delete_food_record(
+    record_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    record = db.query(FoodRecord).filter(
+        FoodRecord.id == record_id,
+        FoodRecord.user_id == current_user.id,
+    ).first()
+
+    if not record:
+        return ApiResponse(success=False, detail="记录不存在或无权删除")
+
+    db.delete(record)
+    db.commit()
+    return ApiResponse(success=True, detail="记录已删除")

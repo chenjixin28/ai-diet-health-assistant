@@ -40,6 +40,11 @@ class Settings:
     DEEPSEEK_API_BASE: str = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com")
     DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 
+    # ---------- LLM (文本模型，食谱推荐/膳食建议) ----------
+    LLM_API_KEY: str = os.getenv("LLM_API_KEY", os.getenv("DEEPSEEK_API_KEY", ""))
+    LLM_API_BASE: str = os.getenv("LLM_API_BASE", os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com"))
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "deepseek-chat")
+
     # ---------- 食物识别模式 ----------
     FOOD_RECOGNITION_MODE: str = os.getenv("FOOD_RECOGNITION_MODE", "deepseek")
 

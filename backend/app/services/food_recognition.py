@@ -5,10 +5,12 @@
 - yolo: 使用本地YOLO模型（支持YOLO-World开放词汇检测）
 """
 
-from pathlib import Path
+import os
 import base64
 import json
 import logging
+from pathlib import Path
+
 import httpx
 from app.config import settings
 
@@ -97,9 +99,35 @@ def _real_predict(image_path: str) -> list[dict]:
     return predictions
 
 
-def _image_to_base64(image_path: str) -> str:
+def _optimize_image(image_path: str, max_size: int = 512) -> tuple[bytes, str]:
+    import cv2
+
+    original_size = os.path.getsize(image_path)
+    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    if img is None:
+        with open(image_path, "rb") as f:
+            return f.read(), "image/jpeg"
+
+    h, w = img.shape[:2]
+    if max(h, w) > max_size:
+        scale = max_size / max(h, w)
+        new_w, new_h = int(w * scale), int(h * scale)
+        img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    else:
+        new_w, new_h = w, h
+
+    success, encoded = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 75])
+    if success:
+        compressed = encoded.tobytes()
+        logger.info(f"图片压缩: {w}x{h}→{new_w}x{new_h}, {original_size/1024:.0f}KB→{len(compressed)/1024:.0f}KB")
+        return compressed, "image/jpeg"
+
     with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
+        return f.read(), "image/jpeg"
+
+
+def _image_to_base64(image_bytes: bytes) -> str:
+    return base64.b64encode(image_bytes).decode("utf-8")
 
 
 def _vision_predict(image_path: str) -> list[dict]:
@@ -107,7 +135,8 @@ def _vision_predict(image_path: str) -> list[dict]:
     if not api_key:
         raise VisionAPIError("API Key 未配置，请在 .env 中设置 DEEPSEEK_API_KEY")
 
-    img_base64 = _image_to_base64(image_path)
+    img_bytes, mime = _optimize_image(image_path)
+    img_base64 = _image_to_base64(img_bytes)
 
     url = f"{settings.DEEPSEEK_API_BASE}/chat/completions"
     headers = {
@@ -115,7 +144,11 @@ def _vision_predict(image_path: str) -> list[dict]:
         "Content-Type": "application/json"
     }
 
-    prompt = """识别图片中的食物并返回JSON：[{"food_name":"食物名","confidence":0.95,"calories":200,"protein":10.5,"fat":5.2,"carbohydrates":30.0,"serving_size":"约200g"}]"""
+    prompt = (
+        '识别图片中所有食物，只返回JSON数组，格式：'
+        '[{"food_name":"食物名","calories":热量,"protein":蛋白质g,"fat":脂肪g,'
+        '"carbohydrates":碳水g,"serving_size":"分量","confidence":0.95}]'
+    )
 
     payload = {
         "model": settings.DEEPSEEK_MODEL,
@@ -127,25 +160,29 @@ def _vision_predict(image_path: str) -> list[dict]:
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/jpeg;base64,{img_base64}"
+                            "url": f"data:{mime};base64,{img_base64}"
                         }
                     }
                 ]
             }
         ],
-        "max_tokens": 1000,
+        "max_tokens": 500,
         "temperature": 0.0
     }
 
     logger.info(f"调用Vision API: {url}, model: {settings.DEEPSEEK_MODEL}")
 
+    import re
+
     try:
-        with httpx.Client(trust_env=False) as client:
+        with httpx.Client(trust_env=False, transport=httpx.HTTPTransport(retries=3)) as client:
             response = client.post(url, json=payload, headers=headers, timeout=60)
     except httpx.TimeoutException:
         raise VisionAPIError("AI识别服务请求超时，请稍后重试")
     except httpx.ConnectError:
         raise VisionAPIError("无法连接AI识别服务，请检查网络")
+    except httpx.ReadError:
+        raise VisionAPIError("AI识别服务连接中断，请稍后重试")
 
     result = response.json()
 
@@ -198,13 +235,22 @@ def _vision_predict(image_path: str) -> list[dict]:
         try:
             foods = json.loads(json_str)
         except json.JSONDecodeError:
-            start = content.find('[')
-            end = content.rfind(']') + 1
-            if start != -1 and end > start:
-                foods = json.loads(content[start:end])
-            else:
-                logger.warning(f"无法解析Vision API返回的JSON: {content[:200]}")
-                foods = []
+            fixed = re.sub(r'":(\d+)"', r':\1', json_str)
+            fixed = re.sub(r'"(\d+)"', r'\1', fixed)
+            try:
+                foods = json.loads(fixed)
+            except json.JSONDecodeError:
+                start = content.find('[')
+                end = content.rfind(']') + 1
+                if start != -1 and end > start:
+                    try:
+                        foods = json.loads(content[start:end])
+                    except json.JSONDecodeError:
+                        logger.warning(f"无法解析Vision API返回的JSON: {content[:200]}")
+                        foods = []
+                else:
+                    logger.warning(f"无法解析Vision API返回的JSON: {content[:200]}")
+                    foods = []
 
         if isinstance(foods, dict):
             foods = [foods]

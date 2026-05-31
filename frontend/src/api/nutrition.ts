@@ -13,4 +13,7 @@ export const nutritionApi = {
       responseType: 'stream',
       headers: { Accept: 'text/event-stream' },
     }),
+
+  getAdvice: () =>
+    api.get('/nutrition/advice'),
 }

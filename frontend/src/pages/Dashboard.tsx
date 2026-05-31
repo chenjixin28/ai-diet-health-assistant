@@ -23,28 +23,38 @@ export function Dashboard() {
 
   const [dailyCalories, setDailyCalories] = useState(0)
   const [dailyProtein, setDailyProtein] = useState(0)
+  const [loaded, setLoaded] = useState(false)
 
   const calorieTarget = user?.daily_calorie_target || 2000
   const proteinTarget = user?.daily_protein_target || 60
 
   useEffect(() => {
-    nutritionApi.getToday().then((res) => {
-      if (res.data.success) {
-        setDailyCalories(res.data.data?.total_calories || 0)
-        setDailyProtein(res.data.data?.total_protein || 0)
-      }
-    }).catch(() => {})
+    const init = async () => {
+      try {
+        const { data: profile } = await authApi.getMe()
+        if (profile.success) setUser(profile.data)
+      } catch {}
+      try {
+        const { data: today } = await nutritionApi.getToday()
+        if (today.success) {
+          setDailyCalories(today.data?.total_calories || 0)
+          setDailyProtein(today.data?.total_protein || 0)
+        }
+      } catch {}
+      setLoaded(true)
+    }
+    init()
   }, [])
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      const payload = {
-        height: height ? parseFloat(height) : undefined,
-        weight: weight ? parseFloat(weight) : undefined,
-        health_goal: goal as HealthGoal | undefined,
-        target_weight: targetWeight ? parseFloat(targetWeight) : undefined,
-      }
+      const payload: Record<string, number | string | undefined> = {}
+      if (height) payload.height = parseFloat(height)
+      if (weight) payload.weight = parseFloat(weight)
+      if (goal) payload.health_goal = goal
+      if (targetWeight) payload.target_weight = parseFloat(targetWeight)
+
       const { data } = await authApi.updateProfile(payload)
       if (data.success) {
         const { data: profile } = await authApi.getMe()
@@ -63,7 +73,7 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">👋 你好，{user?.username}</h1>
+      <h1 className="text-2xl font-bold text-gray-900">👋 健康中心</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">

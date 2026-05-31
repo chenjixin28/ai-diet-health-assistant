@@ -8,6 +8,7 @@ import { Dashboard } from './pages/Dashboard'
 import { FoodRecognition } from './pages/FoodRecognition'
 import { NutritionAnalysis } from './pages/NutritionAnalysis'
 import { MealPlanner } from './pages/MealPlanner'
+import { CheckIn } from './pages/CheckIn'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -32,6 +33,7 @@ function App() {
           <Route path="/recognition" element={<FoodRecognition />} />
           <Route path="/nutrition" element={<NutritionAnalysis />} />
           <Route path="/meal-planner" element={<MealPlanner />} />
+          <Route path="/checkin" element={<CheckIn />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

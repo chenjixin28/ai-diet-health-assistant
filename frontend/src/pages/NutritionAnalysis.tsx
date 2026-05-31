@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Bar, Doughnut } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -29,6 +29,20 @@ export function NutritionAnalysis() {
   const [records, setRecords] = useState<FoodRecordType[]>([])
   const [days, setDays] = useState(7)
 
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [addFood, setAddFood] = useState('')
+  const [addMeal, setAddMeal] = useState('lunch')
+  const [addCal, setAddCal] = useState('')
+  const [addProtein, setAddProtein] = useState('')
+  const [addFat, setAddFat] = useState('')
+  const [addCarb, setAddCarb] = useState('')
+  const [addServing, setAddServing] = useState('')
+  const [addLoading, setAddLoading] = useState(false)
+
+  const [advice, setAdvice] = useState('')
+  const [adviceLoading, setAdviceLoading] = useState(false)
+  const adviceRef = useRef<HTMLDivElement>(null)
+
   const fetchData = async () => {
     try {
       const [summaryRes, todayRes, recordsRes] = await Promise.all([
@@ -46,7 +60,7 @@ export function NutritionAnalysis() {
         setMealCount(d?.meal_count || 0)
       }
       if (recordsRes.data.success) setRecords(recordsRes.data.data?.records || [])
-    } catch (err) {
+    } catch {
       showToast('获取营养数据失败', 'error')
     }
   }
@@ -54,6 +68,75 @@ export function NutritionAnalysis() {
   useEffect(() => {
     fetchData()
   }, [days])
+
+  const handleDelete = async (id: number, name: string) => {
+    if (!confirm(`确定删除「${name}」这条记录吗？`)) return
+    try {
+      const { data } = await foodApi.deleteRecord(id)
+      if (data.success) {
+        showToast('记录已删除', 'success')
+        fetchData()
+      } else {
+        showToast(data.detail || '删除失败', 'error')
+      }
+    } catch {
+      showToast('删除失败', 'error')
+    }
+  }
+
+  const handleAddFood = async () => {
+    if (!addFood.trim() || !addCal) {
+      showToast('请填写食物名称和热量', 'error')
+      return
+    }
+    setAddLoading(true)
+    try {
+      const { data } = await foodApi.addRecord({
+        food_name: addFood,
+        meal_type: addMeal,
+        calories: parseInt(addCal) || 0,
+        protein: parseInt(addProtein) || 0,
+        fat: parseInt(addFat) || 0,
+        carbohydrates: parseInt(addCarb) || 0,
+        serving_size: addServing || undefined,
+      })
+      if (data.success) {
+        showToast('记录已添加', 'success')
+        setShowAddDialog(false)
+        setAddFood('')
+        setAddCal('')
+        setAddProtein('')
+        setAddFat('')
+        setAddCarb('')
+        setAddServing('')
+        fetchData()
+      } else {
+        showToast(data.detail || '添加失败', 'error')
+      }
+    } catch {
+      showToast('添加失败', 'error')
+    } finally {
+      setAddLoading(false)
+    }
+  }
+
+  const handleGetAdvice = async () => {
+    setAdviceLoading(true)
+    setAdvice('')
+    try {
+      const { data: resp } = await nutritionApi.getAdvice()
+      if (resp.success && resp.data?.advice) {
+        setAdvice(resp.data.advice)
+      } else {
+        showToast('获取建议失败', 'error')
+      }
+      adviceRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } catch {
+      showToast('获取建议失败', 'error')
+    } finally {
+      setAdviceLoading(false)
+    }
+  }
 
   const barData = {
     labels: summary.map((s) => s.date.slice(5)),
@@ -77,6 +160,8 @@ export function NutritionAnalysis() {
       },
     ],
   }
+
+  const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack']
 
   return (
     <div className="space-y-6">
@@ -159,23 +244,127 @@ export function NutritionAnalysis() {
         </div>
       </div>
 
-      {records.length > 0 && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="font-semibold text-gray-800 mb-4">📝 最近饮食记录</h2>
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-800">📝 饮食记录</h2>
+          <button
+            onClick={() => setShowAddDialog(true)}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+          >
+            + 手动添加
+          </button>
+        </div>
+
+        {records.length > 0 ? (
           <div className="space-y-2">
-            {records.slice(0, 10).map((r) => (
-              <div key={r.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <div>
+            {records.map((r) => (
+              <div key={r.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+                <div className="flex-1">
                   <span className="text-sm font-medium text-gray-700">{r.food_name}</span>
                   <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{getMealTypeLabel(r.meal_type)}</span>
+                  {r.serving_size && <span className="ml-2 text-xs text-gray-400">{r.serving_size}</span>}
                 </div>
-                <div className="text-sm text-gray-500">
-                  <span className="text-primary-600 font-medium">{formatCalories(r.calories)}</span>
-                  <span className="mx-2 text-gray-300">|</span>
-                  <span>{r.recorded_at?.slice(11, 16)}</span>
+                <div className="flex items-center gap-3">
+                  <div className="text-sm text-right">
+                    <span className="text-primary-600 font-medium">{formatCalories(r.calories)}</span>
+                    <span className="mx-1 text-gray-300">|</span>
+                    <span className="text-gray-400">{r.recorded_at?.slice(11, 16)}</span>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(r.id, r.food_name)}
+                    className="text-red-400 hover:text-red-600 text-sm px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                    title="删除"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400 text-center py-6">暂无记录，去"食物识别"拍照或点击手动添加</p>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-800">🤖 AI 膳食建议</h2>
+          <button
+            onClick={handleGetAdvice}
+            disabled={adviceLoading}
+            className="px-5 py-2 bg-gradient-to-r from-primary-600 to-green-600 text-white rounded-lg text-sm font-medium hover:from-primary-700 hover:to-green-700 transition-colors disabled:opacity-50"
+          >
+            {adviceLoading ? '分析中...' : '获取AI建议'}
+          </button>
+        </div>
+        {advice ? (
+          <div ref={adviceRef} className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-green-50 rounded-lg p-4">
+            {advice}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400 text-center py-4">
+            点击上方按钮，AI 将根据今日饮食数据给出个性化建议
+          </p>
+        )}
+      </div>
+
+      {showAddDialog && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowAddDialog(false)}>
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">手动添加食物</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">食物名称 *</label>
+                <input value={addFood} onChange={(e) => setAddFood(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-400" placeholder="如：红烧肉" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">餐次</label>
+                <div className="flex gap-2">
+                  {mealTypes.map((mt) => (
+                    <button key={mt} onClick={() => setAddMeal(mt)}
+                      className={`flex-1 py-1.5 rounded text-xs font-medium border ${
+                        addMeal === mt ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-500'
+                      }`}
+                    >{getMealTypeLabel(mt)}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">热量 (kcal) *</label>
+                  <input type="number" value={addCal} onChange={(e) => setAddCal(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-400" placeholder="200" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">份量</label>
+                  <input value={addServing} onChange={(e) => setAddServing(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-400" placeholder="约200g" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">蛋白质 (g)</label>
+                  <input type="number" value={addProtein} onChange={(e) => setAddProtein(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-400" placeholder="10" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">脂肪 (g)</label>
+                  <input type="number" value={addFat} onChange={(e) => setAddFat(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-400" placeholder="5" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">碳水 (g)</label>
+                  <input type="number" value={addCarb} onChange={(e) => setAddCarb(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-400" placeholder="30" />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={handleAddFood} disabled={addLoading}
+                className="flex-1 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+              >{addLoading ? '添加中...' : '添加'}</button>
+              <button onClick={() => setShowAddDialog(false)}
+                className="flex-1 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">取消</button>
+            </div>
           </div>
         </div>
       )}

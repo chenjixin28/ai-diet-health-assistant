@@ -28,4 +28,7 @@ export const foodApi = {
 
   searchFood: (keyword: string) =>
     api.post('/foods/search', { keyword }),
+
+  deleteRecord: (id: number) =>
+    api.delete(`/foods/records/${id}`),
 }

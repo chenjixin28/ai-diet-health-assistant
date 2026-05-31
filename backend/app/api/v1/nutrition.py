@@ -6,8 +6,9 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.user import User
 from app.models.food_record import FoodRecord
+from app.models.meal_plan import MealPlan
 from app.schemas.user import ApiResponse
-from app.services.recommendation_engine import recommend_meal_stream
+from app.services.recommendation_engine import recommend_meal_stream, generate_dietary_advice, format_meal_plan_text
 from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/nutrition", tags=["营养分析"])
@@ -106,6 +107,7 @@ async def recommend_meal(
     target_calories: int = Query(default=2000, ge=500, le=5000),
     preferences: str = Query(default=""),
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     profile = current_user.health_profile
     goal = health_goal
@@ -117,12 +119,49 @@ async def recommend_meal(
         if profile.daily_calorie_target:
             calories = profile.daily_calorie_target
 
+    plans = db.query(MealPlan).filter(MealPlan.goal_type == goal).all()
+    if not plans:
+        plans = db.query(MealPlan).all()
+
+    import random
+    plan = random.choice(plans)
+    pre_text = format_meal_plan_text(plan, calories)
+
     return StreamingResponse(
-        recommend_meal_stream(health_goal=goal, target_calories=calories, preferences=preferences),
+        recommend_meal_stream(health_goal=goal, target_calories=calories, preferences=preferences, pre_text=pre_text),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
+    )
+
+
+@router.get("/advice", response_model=ApiResponse)
+async def get_dietary_advice(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from datetime import datetime
+
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    records = (
+        db.query(FoodRecord)
+        .filter(
+            FoodRecord.user_id == current_user.id,
+            FoodRecord.recorded_at >= today_start,
+            FoodRecord.recorded_at <= today_end,
+        )
+        .all()
+    )
+
+    profile = current_user.health_profile
+    advice_text = await generate_dietary_advice(records, profile)
+    return ApiResponse(
+        success=True,
+        detail="膳食建议",
+        data={"advice": advice_text},
     )
